@@ -69,12 +69,32 @@ def seperateString(message, key_length):
 
 def find_best_shift(ciphertext):
     frequencies = {
-        'E': 12.02, 'T': 9.10, 'A': 8.12, 'O': 7.68, 'I': 7.31,
-        'N': 6.95, 'S': 6.28, 'H': 5.92, 'R': 6.02, 'D': 4.32,
-        'L': 3.98, 'C': 2.78, 'U': 2.75, 'M': 2.40, 'W': 2.36,
-        'F': 2.23, 'G': 2.02, 'Y': 1.97, 'P': 1.93, 'B': 1.49,
-        'V': 0.98, 'K': 0.77, 'J': 0.15, 'X': 0.15, 'Q': 0.10,
-        'Z': 0.07
+        "E": 12.02,
+        "T": 9.10,
+        "A": 8.12,
+        "O": 7.68,
+        "I": 7.31,
+        "N": 6.95,
+        "S": 6.28,
+        "H": 5.92,
+        "R": 6.02,
+        "D": 4.32,
+        "L": 3.98,
+        "C": 2.78,
+        "U": 2.75,
+        "M": 2.40,
+        "W": 2.36,
+        "F": 2.23,
+        "G": 2.02,
+        "Y": 1.97,
+        "P": 1.93,
+        "B": 1.49,
+        "V": 0.98,
+        "K": 0.77,
+        "J": 0.15,
+        "X": 0.15,
+        "Q": 0.10,
+        "Z": 0.07,
     }
 
     def calculate_score(text):
@@ -85,16 +105,20 @@ def find_best_shift(ciphertext):
         return score
 
     best_score = 0
-    best_text = ''
+    best_text = ""
 
     for shift in range(1, 26):
-        shifted_text = ''
+        shifted_text = ""
         for letter in ciphertext:
             if letter.isalpha():
                 if letter.islower():
-                    shifted_text += chr((ord(letter) - ord('a') + shift) % 26 + ord('a'))
+                    shifted_text += chr(
+                        (ord(letter) - ord("a") + shift) % 26 + ord("a")
+                    )
                 else:
-                    shifted_text += chr((ord(letter) - ord('A') + shift) % 26 + ord('A'))
+                    shifted_text += chr(
+                        (ord(letter) - ord("A") + shift) % 26 + ord("A")
+                    )
             else:
                 shifted_text += letter
 
@@ -104,6 +128,20 @@ def find_best_shift(ciphertext):
             best_text = shifted_text
 
     return best_text
+
+def mergeDecryptedChunks(decrypted_chunks):
+    merged_text = ""
+
+    # Determine the maximum length among the decrypted chunks
+    max_length = max(len(chunk) for chunk in decrypted_chunks)
+
+    for i in range(max_length):
+        for chunk in decrypted_chunks:
+            # Add the current letter from each decrypted chunk to the merged text
+            if i < len(chunk):
+                merged_text += chunk[i]
+
+    return merged_text
 
 def Kasiski_Examination():
     cipher = "CVJTNAFENMCDMKBXFSTKLHGSOJWHOFUISFYFBEXEINFIMAYSSDYYIJNPWTOKFRHWVWTZFXHLUYUMSGVDURBWBIVXFAFMYFYXPIGBHWIFHHOJBEXAUNFIYLJWDKNHGAOVBHHGVINAULZFOFUQCVFBYNFTYGMMSVGXCFZFOKQATUIFUFERQTEWZFOKMWOJYLNZBKSHOEBPNAYTFKNXLBVUAXCXUYYKYTFRHRCFUYCLUKTVGUFQBESWYSSWLBYFEFZVUWTRLLNGIZGBMSZKBTNTSLNNMDPMYMIUBVMTLOBJHHFWTJNAUFIZMBZLIVHMBSUWLBYFEUYFUFENBRVJVKOLLGTVUZUAOJNVUWTRLMBATZMFSSOJQXLFPKNAULJCIOYVDRYLUJMVMLVMUKBTNAMFPXXJPDYFIJFYUWSGVIUMBWSTUXMSSNYKYDJMCGASOUXBYSMCMEUNFJNAUFUYUMWSFJUKQWSVXXUVUFFBPWBCFYLWFDYGUKDRYLUJMFPXXEFZQXYHGFLACEBJBXQSTWIKNMORNXCJFAIBWWBKCMUKIVQTMNBCCTHLJYIGIMSYCFVMURMAYOBJUFVAUZINMATCYPBANKBXLWJJNXUJTWIKBATCIOYBPPZHLZJJZHLLVEYAIFPLLYIJIZMOUDPLLTHVEVUMBXPIBBMSNSCMCGONBHCKIVLXMGCRMXNZBKQHODESYTVGOUGTHAGRHRMHFREYIJIZGAUNFZIYZWOUYWQZPZMAYJFJIKOVFKBTNOPLFWHGUSYTLGNRHBZSOPMIYSLWIKBANYUOYAPWZXHVFUQAIATYYKYKPMCEYLIRNPCDMEIMFGWVBBMUPLHMLQJWUGSKQVUDZGSYCFBSWVCHZXFEXXXAQROLYXPIUKYHMPNAYFOFHXBSWVCHZXFEXXXAIRPXXGOVHHGGSVNHWSFJUKNZBESHOKIRFEXGUFVKOLVJNAYIVVMMCGOFZACKEVUMBATVHKIDMVXBHLIVWTJAUFFACKHCIKSFPKYQNWOLUMYVXYYKYAOYYPUKXFLMBQOFLACKPWZXHUFJYGZGSTYWZGSNBBWZIVMNZXFIYWXWBKBAYJFTIFYKIZMUIVZDINLFFUVRGSSBUGNGOPQAILIFOZBZFYUWHGIRHWCFIZMWYSUYMAUDMIYVYAWVNAYTFEYYCLPWBBMVZZHZUHMRWXCFUYYVIENFHPYSMKBTMOIZWAIXZFOLBSMCHHNOJKBMBATZXXJSSKNAULBJCLFWXDSUYKUCIOYJGFLMBWHFIWIXSFGXCZBMYMBWTRGXXSHXYKZGSDSLYDGNBXHAUJBTFDQCYTMWNPWHOFUISMIFFVXFSVFRNA"
@@ -119,8 +157,17 @@ def Kasiski_Examination():
     factorsByCount = getMostCommonFactors(seqFactors)
     splitStrings = seperateString(cipher, factorsByCount)
 
-    for splitString in splitStrings:
-        print(find_best_shift(splitString))
+    decrypted_chunks = [find_best_shift(splitString) for splitString in splitStrings]
+
+    # merged_text = ''
+    # for i in range(len(cipher)):
+    #     for chunk in decrypted_chunks:
+    #         merged_text += chunk[i]
+
+    merged_text = mergeDecryptedChunks(decrypted_chunks)
+
+    return merged_text
+
 
 if __name__ == "__main__":
-    Kasiski_Examination()
+    print(Kasiski_Examination())

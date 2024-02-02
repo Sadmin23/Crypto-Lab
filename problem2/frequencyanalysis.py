@@ -1,41 +1,21 @@
-def find_best_shift(ciphertext):
-    frequencies = {
-        'E': 12.02, 'T': 9.10, 'A': 8.12, 'O': 7.68, 'I': 7.31,
-        'N': 6.95, 'S': 6.28, 'H': 5.92, 'R': 6.02, 'D': 4.32,
-        'L': 3.98, 'C': 2.78, 'U': 2.75, 'M': 2.40, 'W': 2.36,
-        'F': 2.23, 'G': 2.02, 'Y': 1.97, 'P': 1.93, 'B': 1.49,
-        'V': 0.98, 'K': 0.77, 'J': 0.15, 'X': 0.15, 'Q': 0.10,
-        'Z': 0.07
-    }
+def mergeDecryptedChunks(decrypted_chunks):
+    """
+    Merges the decrypted chunks according to the specified pattern.
+    """
+    merged_text = ""
 
-    def calculate_score(text):
-        score = 0
-        for letter in text:
-            if letter.upper() in frequencies:
-                score += frequencies[letter.upper()]
-        return score
+    # Determine the maximum length among the decrypted chunks
+    max_length = max(len(chunk) for chunk in decrypted_chunks)
 
-    best_score = 0
-    best_text = ''
+    for i in range(max_length):
+        for chunk in decrypted_chunks:
+            # Add the current letter from each decrypted chunk to the merged text
+            if i < len(chunk):
+                merged_text += chunk[i]
 
-    for shift in range(1, 26):
-        shifted_text = ''
-        for letter in ciphertext:
-            if letter.isalpha():
-                if letter.islower():
-                    shifted_text += chr((ord(letter) - ord('a') + shift) % 26 + ord('a'))
-                else:
-                    shifted_text += chr((ord(letter) - ord('A') + shift) % 26 + ord('A'))
-            else:
-                shifted_text += letter
+    return merged_text
 
-        score = calculate_score(shifted_text)
-        if score > best_score:
-            best_score = score
-            best_text = shifted_text
-
-    return best_text
-
-message = "ADSSFFNSJKWLGWAXWJNWAGLQNMFAFWWZETBXTFKQSFWGSTDUOWFLSFFJGAWASFLVJMAJJGWSDSSNFSWVWWKJEHESMJWKNLMMOAAAWJABZLFJDVXSGKGZDGAHJNWZJVOGGSSAAVAKLDGUQKGSXAXHFSXAGGSZKGLIGKADLAKFWVAKQKUGGZXWJKVFSGLZGFSDATLVHFESOXSOASLWKJWXZWSGDADWFFV"
-message = message.lower()
-print(find_best_shift(message))
+# Example usage:
+decrypted_chunks = ["ABC", "DEF", "GHIJKL"]
+merged_text = mergeDecryptedChunks(decrypted_chunks)
+print(merged_text)
