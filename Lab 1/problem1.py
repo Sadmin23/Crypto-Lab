@@ -84,7 +84,7 @@ def main():
     write_text_to_file(output_file_path, formatted_output)
 
     decoded_text = vigenere_decipher(formatted_output, key)
-    # print("Decoded Message:", decoded_text)
+    print("Decoded Message:", decoded_text)
 
 
 if __name__ == "__main__":

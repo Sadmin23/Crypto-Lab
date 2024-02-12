@@ -47,6 +47,11 @@ def getKeyLength(factorList):
             if factor <= MAX_KEY_LENGTH:
                 factor_count[factor] = factor_count.get(factor, 0) + 1
 
+    #sort factor_count by count
+    factor_count = dict(sorted(factor_count.items(), key=lambda x: x[1], reverse=True))
+
+    print("Factor Counts:", factor_count)
+
     keyLength = [(factor, count) for factor, count in factor_count.items()]
 
     upper_count = max(keyLength, key=lambda x: x[1])[1]
@@ -58,6 +63,8 @@ def getKeyLength(factorList):
     filteredFactors = [
         factor for factor, count in keyLength if lower_limit <= count <= upper_limit
     ]
+
+    print("Filtered Factors:", filteredFactors)
 
     mostProbableKeyLength = max(filteredFactors)
 
@@ -137,7 +144,7 @@ def find_best_shift(ciphertext):
 def calculate_key(split_strings, decrypted_chunks, key_length):
     key = ""
 
-    print("Key Length:", key_length)
+    print("Predicted Key Length:", key_length)
 
     for i in range(key_length):
         shift_value = (ord(split_strings[i][0]) - ord(decrypted_chunks[i][0])) % 26
