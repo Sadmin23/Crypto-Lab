@@ -41,9 +41,12 @@ def brute_force_attack(ciphered_text):
 
 
 if __name__ == "__main__":
-    with open("ciphered_text.txt", "r") as inputfile, open(
-        "deciphered_text.txt", "w"
-    ) as outputfile, open("key.txt", "w") as keyfile:
+    # with open("ciphered_text.txt", "r") as inputfile, open(
+    #     "deciphered_text.txt", "w"
+    # ) as outputfile, open("key.txt", "w") as keyfile:
+        inputfile = open("ciphered_text.txt", 'r')
+        outputfile = open("decipher_text.txt", 'w')
+        keyfile = open("key.txt", 'w')
         ciphered_text = inputfile.read()
         deciphered_text, key = brute_force_attack(ciphered_text)
         keyfile.write(str(key))
