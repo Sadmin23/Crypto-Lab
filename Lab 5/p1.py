@@ -31,9 +31,6 @@ def string_to_hex(string):
     return bits_to_hex(string_to_bits(string))
 
 
-Key = "0001001100110100010101110111100110011011101111001101111111110001"
-Message = "0000000100100011010001010110011110001001101010111100110111101111"
-
 Ki = []
 Li = []
 Ri = []
@@ -116,4 +113,10 @@ def Encrypt(message, key):
     return bits_to_hex(encrypted_string)
 
 
-print(Encrypt("Hello World", Key))
+if __name__ == "__main__":
+    Message = open("message.txt", "r").read()
+    Key = open("key.txt", "r").read()
+    Key = string_to_bits(Key)
+    Ciphertext = Encrypt(Message, Key)
+    Encrypted = open("encrypted.txt", "w")
+    Encrypted.write(Ciphertext)
