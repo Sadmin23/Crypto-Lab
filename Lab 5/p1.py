@@ -1,32 +1,13 @@
 import box
+import display
 
 
-def change_bit_positions(array, bit_stream):
+def permutation(array, bit_stream):
     result = ""
     for row in array:
         for position in row:
             result += bit_stream[position - 1]
     return result
-
-
-def print_with_spaces_8(result):
-    formatted_result = " ".join([result[i : i + 8] for i in range(0, len(result), 8)])
-    print(formatted_result)
-
-
-def print_with_spaces_7(result):
-    formatted_result = " ".join([result[i : i + 7] for i in range(0, len(result), 7)])
-    print(formatted_result)
-
-
-def print_with_spaces_6(result):
-    formatted_result = " ".join([result[i : i + 6] for i in range(0, len(result), 6)])
-    print(formatted_result)
-
-
-def print_with_spaces_4(result):
-    formatted_result = " ".join([result[i : i + 4] for i in range(0, len(result), 4)])
-    print(formatted_result)
 
 
 def hex_to_bits(hex_string):
@@ -38,49 +19,41 @@ def bits_to_hex(bit_stream):
 
 
 def string_to_bits(string):
-    return "".join([bin(ord(char))[2:].zfill(8) for char in string])
+    bit_string = "".join([bin(ord(char))[2:].zfill(8) for char in string])
+    remainder = len(bit_string) % 64
+    if remainder != 0:
+        padding = "0" * (64 - remainder)
+        bit_string += padding
+    return bit_string
 
 
 def string_to_hex(string):
     return bits_to_hex(string_to_bits(string))
 
 
-print(string_to_hex("Your lips are smoother than vaseline"))
+Key = "0001001100110100010101110111100110011011101111001101111111110001"
+Message = "0000000100100011010001010110011110001001101010111100110111101111"
 
-K = "0001001100110100010101110111100110011011101111001101111111110001"
-M = "0000000100100011010001010110011110001001101010111100110111101111"
-
-# K = "0E329232EA6D0D73"
-# M = "8787878787878787"
-# K = hex_to_bits(K)
-# M = hex_to_bits(M)
-
-K_plus = change_bit_positions(box.PC_1, K)
+Ki = []
+Li = []
+Ri = []
 
 
 def left_shift(bit_stream, shift):
     return bit_stream[shift:] + bit_stream[:shift]
 
 
-Ci = K_plus[:28]
-Di = K_plus[28:]
-Ki = []
+def precompute_key(K):
+    K_plus = permutation(box.PC_1, K)
 
-for i in range(16):
-    Ci = left_shift(Ci, box.Left_Shifts[i])
-    Di = left_shift(Di, box.Left_Shifts[i])
-    CiDi = Ci + Di
-    Ki.append(change_bit_positions(box.PC_2, CiDi))
-    # print_with_spaces_6(Ki[i])
+    Ci = K_plus[:28]
+    Di = K_plus[28:]
 
-
-M_plus = change_bit_positions(box.IP, M)
-
-Li = []
-Ri = []
-
-Li.append(M_plus[:32])
-Ri.append(M_plus[32:])
+    for i in range(16):
+        Ci = left_shift(Ci, box.Left_Shifts[i])
+        Di = left_shift(Di, box.Left_Shifts[i])
+        CiDi = Ci + Di
+        Ki.append(permutation(box.PC_2, CiDi))
 
 
 def map_s_box(bit_stream):
@@ -93,19 +66,54 @@ def map_s_box(bit_stream):
 
 
 def function(Ri, Ki):
-    T = change_bit_positions(box.E, Ri)
+    T = permutation(box.E, Ri)
     T = int(T, 2) ^ int(Ki, 2)
     T = bin(T)[2:].zfill(48)
     T = map_s_box(T)
-    return change_bit_positions(box.P, T)
+    return permutation(box.P, T)
 
 
-for i in range(16):
-    Li.append(Ri[i])
-    f = function(Ri[i], Ki[i])
-    Ri.append(bin(int(Li[i], 2) ^ int(f, 2))[2:].zfill(32))
+def DES(M, K):
+    M_plus = permutation(box.IP, M)
+    Li.append(M_plus[:32])
+    Ri.append(M_plus[32:])
+    precompute_key(K)
+    for i in range(16):
+        Li.append(Ri[i])
+        f = function(Ri[i], Ki[i])
+        Ri.append(bin(int(Li[i], 2) ^ int(f, 2))[2:].zfill(32))
+    R16L16 = Ri[16] + Li[16]
+    C = permutation(box.inv_IP, R16L16)
+    # print(bits_to_hex(C))
+    Li.clear()
+    Ri.clear()
+    return C
 
 
-R16L16 = Ri[16] + Li[16]
-C = change_bit_positions(box.inv_IP, R16L16)
-# print(bits_to_hex(C))
+def split_into_blocks(bit_string, block_size):
+    return [
+        bit_string[i : i + block_size] for i in range(0, len(bit_string), block_size)
+    ]
+
+
+def ECB(blocks, key):
+    encrypted_blocks = []
+    for block in blocks:
+        encrypted_block = DES(block, key)
+        encrypted_blocks.append(encrypted_block)
+    return encrypted_blocks
+
+
+def concatenate_blocks(blocks):
+    return "".join(blocks)
+
+
+def Encrypt(message, key):
+    bit_string = string_to_bits(message)
+    blocks = split_into_blocks(bit_string, 64)
+    encrypted_blocks = ECB(blocks, key)
+    encrypted_string = concatenate_blocks(encrypted_blocks)
+    return bits_to_hex(encrypted_string)
+
+
+print(Encrypt("Hello World", Key))
