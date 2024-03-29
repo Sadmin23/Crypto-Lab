@@ -1,6 +1,4 @@
 import box
-from PIL import Image
-from Crypto.Random import get_random_bytes
 
 
 def permutation(array, bit_stream):
@@ -32,12 +30,10 @@ def string_to_hex(string):
     return bits_to_hex(string_to_bits(string))
 
 
-def bytes_to_bits(byte_stream):
-    return "".join([bin(byte)[2:].zfill(8) for byte in byte_stream])
-
-
-def bits_to_bytes(bit_stream):
-    return bytes([int(bit_stream[i : i + 8], 2) for i in range(0, len(bit_stream), 8)])
+def binary_to_string(binary_data):
+    return "".join(
+        chr(int(binary_data[i : i + 8], 2)) for i in range(0, len(binary_data), 8)
+    ).rstrip("\x00")
 
 
 Ki = []
@@ -79,7 +75,7 @@ def function(Ri, Ki):
     return permutation(box.P, T)
 
 
-def DES(M, K):
+def DES_encrypt(M, K):
     M_plus = permutation(box.IP, M)
     Li.append(M_plus[:32])
     Ri.append(M_plus[32:])
@@ -90,10 +86,25 @@ def DES(M, K):
         Ri.append(bin(int(Li[i], 2) ^ int(f, 2))[2:].zfill(32))
     R16L16 = Ri[16] + Li[16]
     C = permutation(box.inv_IP, R16L16)
-    # print(bits_to_hex(C))
     Li.clear()
     Ri.clear()
     return C
+
+
+def DES_decrypt(C, K):
+    C_plus = permutation(box.IP, C)
+    Li.append(C_plus[:32])
+    Ri.append(C_plus[32:])
+    precompute_key(K)
+    for i in range(16):
+        Li.append(Ri[i])
+        f = function(Ri[i], Ki[15 - i])  # Using keys in reverse order for decryption
+        Ri.append(bin(int(Li[i], 2) ^ int(f, 2))[2:].zfill(32))
+    R16L16 = Ri[16] + Li[16]
+    M = permutation(box.inv_IP, R16L16)
+    Li.clear()
+    Ri.clear()
+    return M
 
 
 def split_into_blocks(bit_string, block_size):
@@ -102,12 +113,15 @@ def split_into_blocks(bit_string, block_size):
     ]
 
 
-def ECB(blocks, key):
-    encrypted_blocks = []
+def ECB(blocks, key, mode="encrypt"):
+    processed_blocks = []
     for block in blocks:
-        encrypted_block = DES(block, key)
-        encrypted_blocks.append(encrypted_block)
-    return encrypted_blocks
+        if mode == "encrypt":
+            processed_block = DES_encrypt(block, key)
+        elif mode == "decrypt":
+            processed_block = DES_decrypt(block, key)
+        processed_blocks.append(processed_block)
+    return processed_blocks
 
 
 def concatenate_blocks(blocks):
@@ -115,7 +129,35 @@ def concatenate_blocks(blocks):
 
 
 def Encrypt(message, key):
-    blocks = split_into_blocks(message, 64)
-    encrypted_blocks = ECB(blocks, key)
+    bit_string = string_to_bits(message)
+    blocks = split_into_blocks(bit_string, 64)
+    encrypted_blocks = ECB(blocks, key, mode="encrypt")
     encrypted_string = concatenate_blocks(encrypted_blocks)
-    return bits_to_bytes(encrypted_string)
+    return bits_to_hex(encrypted_string)
+
+
+def Decrypt(ciphertext, key):
+    bit_string = hex_to_bits(ciphertext)
+    blocks = split_into_blocks(bit_string, 64)
+    decrypted_blocks = ECB(blocks, key, mode="decrypt")
+    decrypted_string = concatenate_blocks(decrypted_blocks)
+    return decrypted_string
+
+
+if __name__ == "__main__":
+    Message = open("message.txt", "r").read()
+    Key = open("key.txt", "r").read()
+    Key = string_to_bits(Key)
+    Ciphertext = Encrypt(Message, Key)
+    print("Original Message:", Message)
+    print("Encrypted Ciphertext:", Ciphertext)
+    with open("encrypted.txt", "w") as encrypted_file:
+        encrypted_file.write(Ciphertext)
+
+    Decrypted_message = Decrypt(Ciphertext, Key)
+
+    Decrypted_message = binary_to_string(Decrypted_message)
+    print("Decrypted Message:", Decrypted_message)
+
+    with open("decrypted.txt", "w") as decrypted_file:
+        decrypted_file.write(Decrypted_message)

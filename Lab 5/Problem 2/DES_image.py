@@ -1,6 +1,5 @@
 import box
 from PIL import Image
-from Crypto.Random import get_random_bytes
 
 
 def permutation(array, bit_stream):
@@ -30,6 +29,14 @@ def string_to_bits(string):
 
 def string_to_hex(string):
     return bits_to_hex(string_to_bits(string))
+
+
+def bytes_to_bits(byte_stream):
+    return "".join([bin(byte)[2:].zfill(8) for byte in byte_stream])
+
+
+def bits_to_bytes(bit_stream):
+    return bytes([int(bit_stream[i : i + 8], 2) for i in range(0, len(bit_stream), 8)])
 
 
 Ki = []
@@ -107,18 +114,24 @@ def concatenate_blocks(blocks):
 
 
 def Encrypt(message, key):
-    bit_string = string_to_bits(message)
-    blocks = split_into_blocks(bit_string, 64)
+    blocks = split_into_blocks(message, 64)
     encrypted_blocks = ECB(blocks, key)
     encrypted_string = concatenate_blocks(encrypted_blocks)
-    return bits_to_hex(encrypted_string)
+    return bits_to_bytes(encrypted_string)
 
 
 if __name__ == "__main__":
-    Message = open("message.txt", "r").read()
+    image = Image.open("image.ppm")
+    image_data = image.tobytes()
+
+    block_size = 8
+    if len(image_data) % block_size != 0:
+        image_data += b" " * (block_size - len(image_data) % block_size)
+
+    image_data = bytes_to_bits(image_data)
     Key = open("key.txt", "r").read()
     Key = string_to_bits(Key)
-    Ciphertext = Encrypt(Message, Key)
-    Encrypted = open("encrypted.txt", "w")
-    Encrypted.write(Ciphertext)
-    Encrypted.close()
+    Ciphertext = Encrypt(image_data, Key)
+
+    encrypted_image = Image.frombytes(image.mode, image.size, Ciphertext)
+    encrypted_image.save("image_enc.ppm")
