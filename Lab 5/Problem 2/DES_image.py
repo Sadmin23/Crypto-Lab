@@ -1,4 +1,4 @@
-import box
+import Matrix
 from PIL import Image
 
 
@@ -49,16 +49,16 @@ def left_shift(bit_stream, shift):
 
 
 def precompute_key(K):
-    K_plus = permutation(box.PC_1, K)
+    K_plus = permutation(Matrix.PC_1, K)
 
     Ci = K_plus[:28]
     Di = K_plus[28:]
 
     for i in range(16):
-        Ci = left_shift(Ci, box.Left_Shifts[i])
-        Di = left_shift(Di, box.Left_Shifts[i])
+        Ci = left_shift(Ci, Matrix.Left_Shifts[i])
+        Di = left_shift(Di, Matrix.Left_Shifts[i])
         CiDi = Ci + Di
-        Ki.append(permutation(box.PC_2, CiDi))
+        Ki.append(permutation(Matrix.PC_2, CiDi))
 
 
 def map_s_box(bit_stream):
@@ -66,20 +66,20 @@ def map_s_box(bit_stream):
     for i in range(8):
         row = int(bit_stream[i * 6] + bit_stream[i * 6 + 5], 2)
         col = int(bit_stream[i * 6 + 1 : i * 6 + 5], 2)
-        result += bin(box.S_Boxes[i][row][col])[2:].zfill(4)
+        result += bin(Matrix.S_Boxes[i][row][col])[2:].zfill(4)
     return result
 
 
 def function(Ri, Ki):
-    T = permutation(box.E, Ri)
+    T = permutation(Matrix.E, Ri)
     T = int(T, 2) ^ int(Ki, 2)
     T = bin(T)[2:].zfill(48)
     T = map_s_box(T)
-    return permutation(box.P, T)
+    return permutation(Matrix.P, T)
 
 
 def DES(M, K):
-    M_plus = permutation(box.IP, M)
+    M_plus = permutation(Matrix.IP, M)
     Li.append(M_plus[:32])
     Ri.append(M_plus[32:])
     precompute_key(K)
@@ -88,7 +88,7 @@ def DES(M, K):
         f = function(Ri[i], Ki[i])
         Ri.append(bin(int(Li[i], 2) ^ int(f, 2))[2:].zfill(32))
     R16L16 = Ri[16] + Li[16]
-    C = permutation(box.inv_IP, R16L16)
+    C = permutation(Matrix.inv_IP, R16L16)
     # print(bits_to_hex(C))
     Li.clear()
     Ri.clear()
@@ -131,7 +131,7 @@ if __name__ == "__main__":
     image_data = bytes_to_bits(image_data)
     Key = open("key.txt", "r").read()
     Key = string_to_bits(Key)
-    Ciphertext = Encrypt(image_data, Key)
+    encrypted_image_data = Encrypt(image_data, Key)
 
-    encrypted_image = Image.frombytes(image.mode, image.size, Ciphertext)
+    encrypted_image = Image.frombytes(image.mode, image.size, encrypted_image_data)
     encrypted_image.save("image_enc.ppm")

@@ -1,7 +1,7 @@
-import box
+import Matrix
 
 
-def permutation(array, bit_stream):
+def map_bits(array, bit_stream):
     result = ""
     for row in array:
         for position in row:
@@ -46,16 +46,16 @@ def left_shift(bit_stream, shift):
 
 
 def precompute_key(K):
-    K_plus = permutation(box.PC_1, K)
+    K_plus = map_bits(Matrix.PC_1, K)
 
     Ci = K_plus[:28]
     Di = K_plus[28:]
 
     for i in range(16):
-        Ci = left_shift(Ci, box.Left_Shifts[i])
-        Di = left_shift(Di, box.Left_Shifts[i])
+        Ci = left_shift(Ci, Matrix.Left_Shifts[i])
+        Di = left_shift(Di, Matrix.Left_Shifts[i])
         CiDi = Ci + Di
-        Ki.append(permutation(box.PC_2, CiDi))
+        Ki.append(map_bits(Matrix.PC_2, CiDi))
 
 
 def map_s_box(bit_stream):
@@ -63,45 +63,45 @@ def map_s_box(bit_stream):
     for i in range(8):
         row = int(bit_stream[i * 6] + bit_stream[i * 6 + 5], 2)
         col = int(bit_stream[i * 6 + 1 : i * 6 + 5], 2)
-        result += bin(box.S_Boxes[i][row][col])[2:].zfill(4)
+        result += bin(Matrix.S_Boxes[i][row][col])[2:].zfill(4)
     return result
 
 
-def function(Ri, Ki):
-    T = permutation(box.E, Ri)
+def Mangler_function(Ri, Ki):
+    T = map_bits(Matrix.E, Ri)
     T = int(T, 2) ^ int(Ki, 2)
     T = bin(T)[2:].zfill(48)
     T = map_s_box(T)
-    return permutation(box.P, T)
+    return map_bits(Matrix.P, T)
 
 
 def DES_encrypt(M, K):
-    M_plus = permutation(box.IP, M)
+    M_plus = map_bits(Matrix.IP, M)
     Li.append(M_plus[:32])
     Ri.append(M_plus[32:])
     precompute_key(K)
     for i in range(16):
         Li.append(Ri[i])
-        f = function(Ri[i], Ki[i])
+        f = Mangler_function(Ri[i], Ki[i])
         Ri.append(bin(int(Li[i], 2) ^ int(f, 2))[2:].zfill(32))
     R16L16 = Ri[16] + Li[16]
-    C = permutation(box.inv_IP, R16L16)
+    C = map_bits(Matrix.inv_IP, R16L16)
     Li.clear()
     Ri.clear()
     return C
 
 
 def DES_decrypt(C, K):
-    C_plus = permutation(box.IP, C)
+    C_plus = map_bits(Matrix.IP, C)
     Li.append(C_plus[:32])
     Ri.append(C_plus[32:])
     precompute_key(K)
     for i in range(16):
         Li.append(Ri[i])
-        f = function(Ri[i], Ki[15 - i])  # Using keys in reverse order for decryption
+        f = Mangler_function(Ri[i], Ki[15 - i])  # Using keys in reverse order for decryption
         Ri.append(bin(int(Li[i], 2) ^ int(f, 2))[2:].zfill(32))
     R16L16 = Ri[16] + Li[16]
-    M = permutation(box.inv_IP, R16L16)
+    M = map_bits(Matrix.inv_IP, R16L16)
     Li.clear()
     Ri.clear()
     return M
