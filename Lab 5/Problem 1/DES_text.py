@@ -10,7 +10,7 @@ def map_bits(array, bit_stream):
 
 
 def hex_to_bits(hex_string):
-    return bin(int(hex_string, 16))[2:].zfill(len(hex_string) * 4)
+    return bin(int(hex_string, 16))[2:]
 
 
 def bits_to_hex(bit_stream):
@@ -75,11 +75,11 @@ def Mangler_function(Ri, Ki):
     return map_bits(Table.P, T)
 
 
-def DES_encrypt(M, K):
+def DES_encrypt(M):
     M_plus = map_bits(Table.IP, M)
     Li.append(M_plus[:32])
     Ri.append(M_plus[32:])
-    precompute_key(K)
+
     for i in range(16):
         Li.append(Ri[i])
         f = Mangler_function(Ri[i], Ki[i])
@@ -91,11 +91,10 @@ def DES_encrypt(M, K):
     return C
 
 
-def DES_decrypt(C, K):
+def DES_decrypt(C):
     C_plus = map_bits(Table.IP, C)
     Li.append(C_plus[:32])
     Ri.append(C_plus[32:])
-    precompute_key(K)
     for i in range(16):
         Li.append(Ri[i])
         f = Mangler_function(Ri[i], Ki[15 - i])
@@ -113,13 +112,13 @@ def split_into_blocks(bit_string, block_size):
     ]
 
 
-def ECB(blocks, key, mode="encrypt"):
+def ECB(blocks, mode="encrypt"):
     processed_blocks = []
     for block in blocks:
         if mode == "encrypt":
-            processed_block = DES_encrypt(block, key)
+            processed_block = DES_encrypt(block)
         elif mode == "decrypt":
-            processed_block = DES_decrypt(block, key)
+            processed_block = DES_decrypt(block)
         processed_blocks.append(processed_block)
     return processed_blocks
 
@@ -131,7 +130,7 @@ def concatenate_blocks(blocks):
 def Encrypt(message, key):
     bit_string = string_to_bits(message)
     blocks = split_into_blocks(bit_string, 64)
-    encrypted_blocks = ECB(blocks, key, mode="encrypt")
+    encrypted_blocks = ECB(blocks, mode="encrypt")
     encrypted_string = concatenate_blocks(encrypted_blocks)
     return bits_to_hex(encrypted_string)
 
@@ -139,7 +138,7 @@ def Encrypt(message, key):
 def Decrypt(ciphertext, key):
     bit_string = hex_to_bits(ciphertext)
     blocks = split_into_blocks(bit_string, 64)
-    decrypted_blocks = ECB(blocks, key, mode="decrypt")
+    decrypted_blocks = ECB(blocks, mode="decrypt")
     decrypted_string = concatenate_blocks(decrypted_blocks)
     return decrypted_string
 
@@ -148,6 +147,7 @@ if __name__ == "__main__":
     Message = open("message.txt", "r").read()
     Key = open("key.txt", "r").read()
     Key = string_to_bits(Key)
+    precompute_key(Key)
     Ciphertext = Encrypt(Message, Key)
     print("Original Message:", Message)
     print("Encrypted Ciphertext:", Ciphertext)
